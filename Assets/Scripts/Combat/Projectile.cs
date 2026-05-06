@@ -1,31 +1,41 @@
+using System;
 using UnityEngine;
 
-/// <summary>
-/// Homing projectile aimed at a specific enemy.
-/// Good enough for an idle game. The rocket scientists can calm down.
-/// </summary>
 public class Projectile : MonoBehaviour
 {
-    [SerializeField] private float defaultSpeed = 8f;
-    [SerializeField] private float hitDistance = 0.1f;
+    [Header("Projectile Settings")]
     [SerializeField] private float lifetime = 5f;
 
     private Enemy target;
-    private float damage;
     private float speed;
+    private float damage;
+    private Action<int> onEnemyDefeated;
+    private bool hasHit;
 
-    public void Initialize(Enemy newTarget, float newDamage, float newSpeed, float sizeMultiplier)
+    public void Initialize(
+        Enemy target,
+        float speed,
+        float damage,
+        Action<int> onEnemyDefeated
+    )
     {
-        target = newTarget;
-        damage = newDamage;
-        speed = newSpeed > 0f ? newSpeed : defaultSpeed;
-        transform.localScale *= Mathf.Max(0.01f, sizeMultiplier);
-
-        Destroy(gameObject, lifetime);
+        this.target = target;
+        this.speed = speed;
+        this.damage = damage;
+        this.onEnemyDefeated = onEnemyDefeated;
+        hasHit = false;
     }
 
     private void Update()
     {
+        lifetime -= Time.deltaTime;
+
+        if (lifetime <= 0f)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
         if (target == null)
         {
             Destroy(gameObject);
@@ -37,13 +47,28 @@ public class Projectile : MonoBehaviour
             target.transform.position,
             speed * Time.deltaTime
         );
+    }
 
-        float distance = Vector2.Distance(transform.position, target.transform.position);
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (hasHit)
+            return;
 
-        if (distance <= hitDistance)
+        if (target == null)
+            return;
+
+        if (other.gameObject != target.gameObject)
+            return;
+
+        hasHit = true;
+
+        int reward = target.TakeDamage(damage);
+
+        if (reward > 0)
         {
-            target.TakeDamage(damage);
-            Destroy(gameObject);
+            onEnemyDefeated?.Invoke(reward);
         }
+
+        Destroy(gameObject);
     }
 }

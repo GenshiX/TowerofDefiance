@@ -1,58 +1,96 @@
+using System;
 using UnityEngine;
 
-/// <summary>
-/// Runtime unit behavior.
-/// It does not search for enemies. It asks its assigned TowerLevel for the current enemy.
-/// </summary>
 public class Unit : MonoBehaviour
 {
-    [SerializeField] private TowerLevel assignedLevel;
-    [SerializeField] private UnitData unitData;
-    [SerializeField] private UnitUpgradeState upgradeState;
-    [SerializeField] private AttackBehavior attackBehavior;
+    [Header("Unit State")]
+    [SerializeField] private string unitName = "Unit";
+    [SerializeField] private bool startsUnlocked = false;
 
-    private float attackCooldown;
+    [Header("Combat")]
+    [SerializeField] private Enemy targetEnemy;
+    [SerializeField] private Projectile projectilePrefab;
+    [SerializeField] private Transform firePoint;
+
+    [SerializeField] private float damage = 1f;
+    [SerializeField] private float fireRate = 1f;
+    [SerializeField] private float projectileSpeed = 6f;
+
+    private bool unlocked;
+    private float fireCooldown;
+
+    public string UnitName => unitName;
+    public bool IsUnlocked => unlocked;
+    public float Damage => damage;
+    public float FireRate => fireRate;
+
+    public event Action<int> EnemyDefeated;
 
     private void Awake()
     {
-        if (upgradeState == null)
-            upgradeState = GetComponent<UnitUpgradeState>();
+        unlocked = startsUnlocked;
 
-        if (attackBehavior == null)
-            attackBehavior = GetComponent<AttackBehavior>();
+        if (firePoint == null)
+        {
+            firePoint = transform;
+        }
 
-        if (upgradeState != null)
-            upgradeState.Initialize(unitData);
+        gameObject.SetActive(unlocked);
     }
 
     private void Update()
     {
-        attackCooldown -= Time.deltaTime;
-
-        if (assignedLevel == null || attackBehavior == null)
+        if (!unlocked)
             return;
 
-        Enemy target = assignedLevel.CurrentEnemy;
-
-        if (target == null)
+        if (targetEnemy == null || projectilePrefab == null)
             return;
 
-        UnitStats stats = UnitStats.From(unitData, upgradeState);
+        fireCooldown -= Time.deltaTime;
 
-        if (attackCooldown <= 0f)
+        if (fireCooldown <= 0f)
         {
-            attackBehavior.Attack(target, stats);
-            attackCooldown = 1f / stats.AttackRate;
+            Fire();
+            fireCooldown = 1f / fireRate;
         }
     }
 
-    public void AssignLevel(TowerLevel level)
+    public void Unlock()
     {
-        assignedLevel = level;
+        unlocked = true;
+        gameObject.SetActive(true);
     }
 
-    public UnitData GetUnitData()
+    public void IncreaseDamage(float amount)
     {
-        return unitData;
+        damage += amount;
+    }
+
+    public void IncreaseFireRate(float amount)
+    {
+        fireRate += amount;
+    }
+
+    private void Fire()
+    {
+        Projectile projectile = Instantiate(
+            projectilePrefab,
+            firePoint.position,
+            Quaternion.identity
+        );
+
+        projectile.gameObject.SetActive(true);
+
+        projectile.Initialize(
+            targetEnemy,
+            projectileSpeed,
+            damage,
+            HandleEnemyDefeated
+        );
+    }
+
+    private void HandleEnemyDefeated(int currencyReward)
+    {
+        EnemyDefeated?.Invoke(currencyReward);
     }
 }

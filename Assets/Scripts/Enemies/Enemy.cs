@@ -1,53 +1,71 @@
-using System;
+using System.Collections;
 using UnityEngine;
 
-/// <summary>
-/// Runtime enemy. Handles health, damage, and death event.
-/// </summary>
-public class Enemy : Damageable
+public class Enemy : MonoBehaviour
 {
-    public event Action<Enemy> Died;
+    [Header("Enemy Settings")]
+    [SerializeField] private string enemyName = "Enemy";
+    [SerializeField] private float maxHealth = 10f;
+    [SerializeField] private int currencyReward = 10;
 
-    public EnemyData Data { get; private set; }
-    public float CurrentHealth { get; private set; }
-    public float MaxHealth { get; private set; }
-    public int GoldReward { get; private set; }
+    [Header("Visual Feedback")]
+    [SerializeField] private Color hitColor = Color.red;
+    [SerializeField] private float flashDuration = 0.08f;
 
-    public void Initialize(EnemyData data, int spawnIndex)
+    private float currentHealth;
+    private SpriteRenderer spriteRenderer;
+    private Color originalColor;
+
+    public string EnemyName => enemyName;
+    public float CurrentHealth => currentHealth;
+    public float MaxHealth => maxHealth;
+    public int CurrencyReward => currencyReward;
+
+    private void Awake()
     {
-        Data = data;
+        currentHealth = maxHealth;
 
-        if (Data == null)
+        spriteRenderer = GetComponent<SpriteRenderer>();
+
+        if (spriteRenderer != null)
         {
-            MaxHealth = 10f;
-            GoldReward = 1;
+            originalColor = spriteRenderer.color;
         }
-        else
-        {
-            float healthMultiplier = 1f + Data.healthGrowthPerSpawn * Mathf.Max(0, spawnIndex - 1);
-            float rewardMultiplier = 1f + Data.rewardGrowthPerSpawn * Mathf.Max(0, spawnIndex - 1);
-
-            MaxHealth = Data.baseHealth * healthMultiplier;
-            GoldReward = Mathf.RoundToInt(Data.goldReward * rewardMultiplier);
-        }
-
-        CurrentHealth = MaxHealth;
     }
 
-    public override void TakeDamage(float amount)
+    public int TakeDamage(float damage)
     {
-        if (amount <= 0f)
+        currentHealth -= damage;
+        Flash();
+
+        if (currentHealth <= 0f)
+        {
+            return Defeat();
+        }
+
+        return 0;
+    }
+
+    private int Defeat()
+    {
+        int reward = currencyReward;
+        currentHealth = maxHealth;
+        return reward;
+    }
+
+    private void Flash()
+    {
+        if (spriteRenderer == null)
             return;
 
-        CurrentHealth -= amount;
-
-        if (CurrentHealth <= 0f)
-            Die();
+        StopAllCoroutines();
+        StartCoroutine(FlashRoutine());
     }
 
-    private void Die()
+    private IEnumerator FlashRoutine()
     {
-        Died?.Invoke(this);
-        Destroy(gameObject);
+        spriteRenderer.color = hitColor;
+        yield return new WaitForSeconds(flashDuration);
+        spriteRenderer.color = originalColor;
     }
 }
