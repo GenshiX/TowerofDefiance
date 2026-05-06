@@ -1,6 +1,7 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 public class TowerLevel : MonoBehaviour
 {
@@ -68,15 +69,18 @@ public class TowerLevel : MonoBehaviour
         if (mage != null)
             mage.EnemyDefeated += AddCurrency;
 
-        UpdateUI("Click units/windows to buy. Fully upgrade the floor to win.");
+        UpdateUI("Click units/windows to buy.");
     }
 
     private void Update()
     {
-        if (gameWon)
-            return;
+        HandleRestartInput();
 
-        HandleKeyboardPurchases();
+        if (!gameWon)
+        {
+            HandleKeyboardPurchases();
+        }
+
         UpdateUI();
     }
 
@@ -103,6 +107,17 @@ public class TowerLevel : MonoBehaviour
         earnCurrencyBeep = CreateBeepClip(660f, 0.12f, 0.6f);
         purchaseBeep = CreateBeepClip(880f, 0.15f, 0.7f);
         winBeep = CreateBeepClip(1040f, 0.35f, 0.8f);
+    }
+
+    private void HandleRestartInput()
+    {
+        if (Keyboard.current == null)
+            return;
+
+        if (Keyboard.current.rKey.wasPressedThisFrame)
+        {
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        }
     }
 
     private void HandleKeyboardPurchases()
@@ -138,7 +153,12 @@ public class TowerLevel : MonoBehaviour
     private void AddCurrency(int amount)
     {
         currency += amount;
-        PlaySound(earnCurrencyBeep);
+
+        if (!gameWon)
+        {
+            PlaySound(earnCurrencyBeep);
+        }
+
         CheckWinCondition();
     }
 
@@ -387,17 +407,10 @@ public class TowerLevel : MonoBehaviour
             mageDamageBought &&
             mageFireRateBought;
 
-        if (allComplete)
+        if (allComplete && !gameWon)
         {
             gameWon = true;
             PlaySound(winBeep);
-
-            if (statusText != null)
-            {
-                statusText.text =
-                    "YOU WIN!\n" +
-                    "Ground floor fully upgraded.";
-            }
         }
     }
 
@@ -420,9 +433,21 @@ public class TowerLevel : MonoBehaviour
         if (statusText == null)
             return;
 
+        if (gameWon)
+        {
+            statusText.text =
+                $"YOU WIN!\n" +
+                $"Ground floor fully upgraded.\n" +
+                $"Currency: {currency}\n" +
+                $"Press R to restart.";
+            return;
+        }
+
         statusText.text =
             $"Currency: {currency}\n" +
-            $"Goal: Fully upgrade the Ground floor\n" +
+            $"Goal: buy all upgrades\n" +
+            $"Grey unit = buy\n" +
+            $"Window = upgrade\n" +
             $"Upgrades: {GetUpgradeCount()}/6\n" +
             $"{message}";
     }
