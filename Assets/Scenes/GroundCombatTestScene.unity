@@ -5865,7 +5865,7 @@ MonoBehaviour:
   audioSource: {fileID: 0}
   currency: 10000
   sling: {fileID: 2104750577}
-  archer: {fileID: 0}
+  archer: {fileID: 2002236471}
   mage: {fileID: 1768970989}
   archerCost: 150
   mageCost: 400
@@ -7683,6 +7683,9 @@ MonoBehaviour:
   currencyReward: 25
   hitColor: {r: 1, g: 0, b: 0, a: 1}
   flashDuration: 0.08
+  healthBarFill: {fileID: 0}
+  fullHealthColor: {r: 0, g: 0, b: 1, a: 1}
+  lowHealthColor: {r: 1, g: 0, b: 0, a: 1}
 --- !u!95 &1852965616
 Animator:
   serializedVersion: 7
@@ -8272,7 +8275,7 @@ MonoBehaviour:
   towerLevel: {fileID: 1548303471}
   purchaseType: 0
   availableColor: {r: 1, g: 1, b: 1, a: 1}
-  purchasedColor: {r: 0, g: 1, b: 0, a: 1}
+  purchasedColor: {r: 1, g: 1, b: 1, a: 1}
   failedClickColor: {r: 1, g: 0, b: 0, a: 1}
   failedFlashDuration: 0.12
 --- !u!58 &2002236468
@@ -8722,6 +8725,9 @@ MonoBehaviour:
   currencyReward: 100
   hitColor: {r: 1, g: 0, b: 0, a: 1}
   flashDuration: 0.08
+  healthBarFill: {fileID: 0}
+  fullHealthColor: {r: 0, g: 0, b: 1, a: 1}
+  lowHealthColor: {r: 1, g: 0, b: 0, a: 1}
 --- !u!58 &2072743327
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -9110,6 +9116,9 @@ MonoBehaviour:
   currencyReward: 50
   hitColor: {r: 1, g: 0, b: 0, a: 1}
   flashDuration: 0.08
+  healthBarFill: {fileID: 0}
+  fullHealthColor: {r: 0, g: 0, b: 1, a: 1}
+  lowHealthColor: {r: 1, g: 0, b: 0, a: 1}
 --- !u!95 &2103953217
 Animator:
   serializedVersion: 7
