@@ -7,6 +7,9 @@ public class TowerLevel : MonoBehaviour
     [Header("UI")]
     [SerializeField] private TMP_Text statusText;
 
+    [Header("Audio")]
+    [SerializeField] private AudioSource audioSource;
+
     [Header("Currency")]
     [SerializeField] private int currency = 0;
 
@@ -47,9 +50,14 @@ public class TowerLevel : MonoBehaviour
 
     private bool gameWon;
 
+    private AudioClip earnCurrencyBeep;
+    private AudioClip purchaseBeep;
+    private AudioClip winBeep;
+
     private void Start()
     {
         AutoFindReferences();
+        CreateAudioClips();
 
         if (sling != null)
             sling.EnemyDefeated += AddCurrency;
@@ -60,7 +68,7 @@ public class TowerLevel : MonoBehaviour
         if (mage != null)
             mage.EnemyDefeated += AddCurrency;
 
-        UpdateUI("Buy all Ground upgrades to win.");
+        UpdateUI("Click units/windows to buy. Fully upgrade the floor to win.");
     }
 
     private void Update()
@@ -77,6 +85,9 @@ public class TowerLevel : MonoBehaviour
         if (statusText == null)
             statusText = FindFirstObjectByType<TMP_Text>();
 
+        if (audioSource == null)
+            audioSource = GetComponent<AudioSource>();
+
         if (sling == null)
             sling = GameObject.Find("Sling")?.GetComponent<Unit>();
 
@@ -85,6 +96,13 @@ public class TowerLevel : MonoBehaviour
 
         if (mage == null)
             mage = GameObject.Find("Mage")?.GetComponent<Unit>();
+    }
+
+    private void CreateAudioClips()
+    {
+        earnCurrencyBeep = CreateBeepClip(660f, 0.12f, 0.6f);
+        purchaseBeep = CreateBeepClip(880f, 0.15f, 0.7f);
+        winBeep = CreateBeepClip(1040f, 0.35f, 0.8f);
     }
 
     private void HandleKeyboardPurchases()
@@ -120,6 +138,7 @@ public class TowerLevel : MonoBehaviour
     private void AddCurrency(int amount)
     {
         currency += amount;
+        PlaySound(earnCurrencyBeep);
         CheckWinCondition();
     }
 
@@ -129,7 +148,89 @@ public class TowerLevel : MonoBehaviour
             return false;
 
         currency -= cost;
+        PlaySound(purchaseBeep);
         return true;
+    }
+
+    public bool TryPurchase(PurchaseType purchaseType)
+    {
+        if (gameWon)
+            return false;
+
+        bool wasComplete = IsPurchaseComplete(purchaseType);
+
+        switch (purchaseType)
+        {
+            case PurchaseType.BuyArcher:
+                BuyArcher();
+                break;
+
+            case PurchaseType.BuyMage:
+                BuyMage();
+                break;
+
+            case PurchaseType.SlingRockSize:
+                BuySlingDamageUpgrade();
+                break;
+
+            case PurchaseType.SlingQuality:
+                BuySlingFireRateUpgrade();
+                break;
+
+            case PurchaseType.ArcherArrowQuality:
+                BuyArcherDamageUpgrade();
+                break;
+
+            case PurchaseType.ArcherQuiver:
+                BuyArcherFireRateUpgrade();
+                break;
+
+            case PurchaseType.MageSpellLevel:
+                BuyMageDamageUpgrade();
+                break;
+
+            case PurchaseType.MageManaRegen:
+                BuyMageFireRateUpgrade();
+                break;
+        }
+
+        UpdateUI();
+
+        bool isComplete = IsPurchaseComplete(purchaseType);
+        return !wasComplete && isComplete;
+    }
+
+    public bool IsPurchaseComplete(PurchaseType purchaseType)
+    {
+        switch (purchaseType)
+        {
+            case PurchaseType.BuyArcher:
+                return archerBought;
+
+            case PurchaseType.BuyMage:
+                return mageBought;
+
+            case PurchaseType.SlingRockSize:
+                return slingDamageBought;
+
+            case PurchaseType.SlingQuality:
+                return slingFireRateBought;
+
+            case PurchaseType.ArcherArrowQuality:
+                return archerDamageBought;
+
+            case PurchaseType.ArcherQuiver:
+                return archerFireRateBought;
+
+            case PurchaseType.MageSpellLevel:
+                return mageDamageBought;
+
+            case PurchaseType.MageManaRegen:
+                return mageFireRateBought;
+
+            default:
+                return false;
+        }
     }
 
     public void BuyArcher()
@@ -289,16 +390,29 @@ public class TowerLevel : MonoBehaviour
         if (allComplete)
         {
             gameWon = true;
-            statusText.text =
-                "YOU WIN!\n" +
-                "Ground floor fully upgraded.\n\n" +
-                "Sling, Archer, and Mage are fully built.";
+            PlaySound(winBeep);
+
+            if (statusText != null)
+            {
+                statusText.text =
+                    "YOU WIN!\n" +
+                    "Ground floor fully upgraded.";
+            }
         }
     }
 
-    private string BoughtText(bool bought, int cost)
+    private int GetUpgradeCount()
     {
-        return bought ? "Bought" : $"Cost {cost}";
+        int count = 0;
+
+        if (slingDamageBought) count++;
+        if (slingFireRateBought) count++;
+        if (archerDamageBought) count++;
+        if (archerFireRateBought) count++;
+        if (mageDamageBought) count++;
+        if (mageFireRateBought) count++;
+
+        return count;
     }
 
     private void UpdateUI(string message = "")
@@ -308,67 +422,34 @@ public class TowerLevel : MonoBehaviour
 
         statusText.text =
             $"Currency: {currency}\n" +
-            $"Goal: Fully upgrade the Ground floor\n\n" +
-
-            $"Units:\n" +
-            $"A - Archer: {BoughtText(archerBought, archerCost)}\n" +
-            $"M - Mage: {BoughtText(mageBought, mageCost)}\n\n" +
-
-            $"Upgrades:\n" +
-            $"1 - Sling Rock Size: {BoughtText(slingDamageBought, slingDamageUpgradeCost)}\n" +
-            $"2 - Sling Quality: {BoughtText(slingFireRateBought, slingFireRateUpgradeCost)}\n" +
-            $"3 - Archer Arrow Quality: {BoughtText(archerDamageBought, archerDamageUpgradeCost)}\n" +
-            $"4 - Archer Quiver: {BoughtText(archerFireRateBought, archerFireRateUpgradeCost)}\n" +
-            $"5 - Mage Spell Level: {BoughtText(mageDamageBought, mageDamageUpgradeCost)}\n" +
-            $"6 - Mage Mana Regen: {BoughtText(mageFireRateBought, mageFireRateUpgradeCost)}\n\n" +
-
-            $"Stats:\n" +
-            $"Sling Damage: {(sling != null ? sling.Damage.ToString("0.0") : "?")} | Rate: {(sling != null ? sling.FireRate.ToString("0.0") : "?")}\n" +
-            $"Archer Damage: {(archer != null ? archer.Damage.ToString("0.0") : "?")} | Rate: {(archer != null ? archer.FireRate.ToString("0.0") : "?")}\n" +
-            $"Mage Damage: {(mage != null ? mage.Damage.ToString("0.0") : "?")} | Rate: {(mage != null ? mage.FireRate.ToString("0.0") : "?")}\n\n" +
-            message;
+            $"Goal: Fully upgrade the Ground floor\n" +
+            $"Upgrades: {GetUpgradeCount()}/6\n" +
+            $"{message}";
     }
 
-    public void TryPurchase(PurchaseType purchaseType)
+    private AudioClip CreateBeepClip(float frequency, float duration, float volume)
     {
-        if (gameWon)
-            return;
+        int sampleRate = 44100;
+        int sampleCount = Mathf.CeilToInt(sampleRate * duration);
+        float[] samples = new float[sampleCount];
 
-        switch (purchaseType)
+        for (int i = 0; i < sampleCount; i++)
         {
-            case PurchaseType.BuyArcher:
-                BuyArcher();
-                break;
-
-            case PurchaseType.BuyMage:
-                BuyMage();
-                break;
-
-            case PurchaseType.SlingRockSize:
-                BuySlingDamageUpgrade();
-                break;
-
-            case PurchaseType.SlingQuality:
-                BuySlingFireRateUpgrade();
-                break;
-
-            case PurchaseType.ArcherArrowQuality:
-                BuyArcherDamageUpgrade();
-                break;
-
-            case PurchaseType.ArcherQuiver:
-                BuyArcherFireRateUpgrade();
-                break;
-
-            case PurchaseType.MageSpellLevel:
-                BuyMageDamageUpgrade();
-                break;
-
-            case PurchaseType.MageManaRegen:
-                BuyMageFireRateUpgrade();
-                break;
+            float time = (float)i / sampleRate;
+            samples[i] = Mathf.Sin(2f * Mathf.PI * frequency * time) * volume;
         }
 
-        UpdateUI();
+        AudioClip clip = AudioClip.Create("GeneratedBeep", sampleCount, 1, sampleRate, false);
+        clip.SetData(samples, 0);
+
+        return clip;
+    }
+
+    private void PlaySound(AudioClip clip)
+    {
+        if (audioSource != null && clip != null)
+        {
+            audioSource.PlayOneShot(clip);
+        }
     }
 }
