@@ -16,6 +16,8 @@
 - Created or placed placeholder unit, enemy, projectile, and upgrade window objects.
 - Helped define the tower/unit/enemy concept and visual structure.
 - Helped test scene layout and gameplay readability.
+- Added Sprites/animations for the "shooters", projectiles, and enemies
+- Created UI elements for player feedback.
 
 ## Shared Work
 - Designed the idle tower concept.
