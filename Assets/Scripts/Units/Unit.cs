@@ -16,8 +16,14 @@ public class Unit : MonoBehaviour
     [SerializeField] private float fireRate = 1f;
     [SerializeField] private float projectileSpeed = 6f;
 
+    [Header("Locked Visual")]
+    [SerializeField] private Color lockedColor = Color.gray;
+
     private bool unlocked;
     private float fireCooldown;
+
+    private SpriteRenderer spriteRenderer;
+    private Color originalColor;
 
     public string UnitName => unitName;
     public bool IsUnlocked => unlocked;
@@ -28,14 +34,20 @@ public class Unit : MonoBehaviour
 
     private void Awake()
     {
-        unlocked = startsUnlocked;
+        spriteRenderer = GetComponent<SpriteRenderer>();
+
+        if (spriteRenderer != null)
+        {
+            originalColor = spriteRenderer.color;
+        }
 
         if (firePoint == null)
         {
             firePoint = transform;
         }
 
-        gameObject.SetActive(unlocked);
+        unlocked = startsUnlocked;
+        ApplyLockVisual();
     }
 
     private void Update()
@@ -58,7 +70,7 @@ public class Unit : MonoBehaviour
     public void Unlock()
     {
         unlocked = true;
-        gameObject.SetActive(true);
+        ApplyLockVisual();
     }
 
     public void IncreaseDamage(float amount)
@@ -69,6 +81,14 @@ public class Unit : MonoBehaviour
     public void IncreaseFireRate(float amount)
     {
         fireRate += amount;
+    }
+
+    private void ApplyLockVisual()
+    {
+        if (spriteRenderer == null)
+            return;
+
+        spriteRenderer.color = unlocked ? originalColor : lockedColor;
     }
 
     private void Fire()

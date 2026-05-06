@@ -132,7 +132,7 @@ public class TowerLevel : MonoBehaviour
         return true;
     }
 
-    private void BuyArcher()
+    public void BuyArcher()
     {
         if (archerBought)
             return;
@@ -149,7 +149,7 @@ public class TowerLevel : MonoBehaviour
         CheckWinCondition();
     }
 
-    private void BuyMage()
+    public void BuyMage()
     {
         if (mageBought)
             return;
@@ -166,7 +166,7 @@ public class TowerLevel : MonoBehaviour
         CheckWinCondition();
     }
 
-    private void BuySlingDamageUpgrade()
+    public void BuySlingDamageUpgrade()
     {
         if (slingDamageBought)
             return;
@@ -182,7 +182,7 @@ public class TowerLevel : MonoBehaviour
         CheckWinCondition();
     }
 
-    private void BuySlingFireRateUpgrade()
+    public void BuySlingFireRateUpgrade()
     {
         if (slingFireRateBought)
             return;
@@ -198,7 +198,7 @@ public class TowerLevel : MonoBehaviour
         CheckWinCondition();
     }
 
-    private void BuyArcherDamageUpgrade()
+    public void BuyArcherDamageUpgrade()
     {
         if (archerDamageBought)
             return;
@@ -217,7 +217,7 @@ public class TowerLevel : MonoBehaviour
         CheckWinCondition();
     }
 
-    private void BuyArcherFireRateUpgrade()
+    public void BuyArcherFireRateUpgrade()
     {
         if (archerFireRateBought)
             return;
@@ -236,7 +236,7 @@ public class TowerLevel : MonoBehaviour
         CheckWinCondition();
     }
 
-    private void BuyMageDamageUpgrade()
+    public void BuyMageDamageUpgrade()
     {
         if (mageDamageBought)
             return;
@@ -255,7 +255,7 @@ public class TowerLevel : MonoBehaviour
         CheckWinCondition();
     }
 
-    private void BuyMageFireRateUpgrade()
+    public void BuyMageFireRateUpgrade()
     {
         if (mageFireRateBought)
             return;
@@ -327,5 +327,48 @@ public class TowerLevel : MonoBehaviour
             $"Archer Damage: {(archer != null ? archer.Damage.ToString("0.0") : "?")} | Rate: {(archer != null ? archer.FireRate.ToString("0.0") : "?")}\n" +
             $"Mage Damage: {(mage != null ? mage.Damage.ToString("0.0") : "?")} | Rate: {(mage != null ? mage.FireRate.ToString("0.0") : "?")}\n\n" +
             message;
+    }
+
+    public void TryPurchase(PurchaseType purchaseType)
+    {
+        if (gameWon)
+            return;
+
+        switch (purchaseType)
+        {
+            case PurchaseType.BuyArcher:
+                BuyArcher();
+                break;
+
+            case PurchaseType.BuyMage:
+                BuyMage();
+                break;
+
+            case PurchaseType.SlingRockSize:
+                BuySlingDamageUpgrade();
+                break;
+
+            case PurchaseType.SlingQuality:
+                BuySlingFireRateUpgrade();
+                break;
+
+            case PurchaseType.ArcherArrowQuality:
+                BuyArcherDamageUpgrade();
+                break;
+
+            case PurchaseType.ArcherQuiver:
+                BuyArcherFireRateUpgrade();
+                break;
+
+            case PurchaseType.MageSpellLevel:
+                BuyMageDamageUpgrade();
+                break;
+
+            case PurchaseType.MageManaRegen:
+                BuyMageFireRateUpgrade();
+                break;
+        }
+
+        UpdateUI();
     }
 }
